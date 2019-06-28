@@ -1,6 +1,6 @@
 <p align="center">
 	    <h1 align="center">Socio-géographie électorale de Paris intra-muros lors des élections présidentielles 2017</h1>
-	    <p align="center">Cette page reprendra l'ensemble de ma démarche méthodologique pour la réalisation de mon mémoire. </p>
+	    <p align="center">Cette page reprend l'ensemble de ma démarche méthodologique pour la réalisation de mon mémoire. </p>
 	    <br><br><br>
 	</p>
 
@@ -165,6 +165,32 @@ Ce matin je transforme mes nombres de votes en pourcentage grâce à R. J'ai ré
 
 Je me suis basé sur [ça](https://stackoverflow.com/questions/6286313/remove-an-entire-column-from-a-data-frame-in-r) pour enlever les colonnes.
 
+### Carte des résultats du second tour :
+
+J'ai dû à nouveau traiter les données pour obtenir des données exploitables dans QGIS, j'ai modifié mon script R :
+
+```R
+R_P_L_T2_1 = X2017_presidentielle_2_par_bureau_large [which(X2017_presidentielle_2_par_bureau_large$departement== '75'), ] # keep only department 75 alias Paris
+Poucentages_inscrits = R_P_L_T2_1 # work on a new dataset
+colnames(Poucentages_inscrits) # rename data with false name
+#[1] "departement"     "commune"         "bureau"          "circonscription" "commune_libelle"
+#[6] "inscrits"        "votants"         "blancs"          "exprimes"        "LE PEN"         
+#[11] "MACRON"   
+
+Poucentages_inscrits[1:2] = list(NULL) # remove col departement commune cicronscription
+Poucentages_inscrits[2:3] = list(NULL)
+names(Poucentages_inscrits)[names(Poucentages_inscrits) == "LE PEN"] <- "LEPEN" # rename the wrong names
+Poucentages_inscrits$PLEPEN = ((Poucentages_inscrits$LEPEN/Poucentages_inscrits$inscrits)*100) # Create new column for each candidate in percentage
+Poucentages_inscrits$PMACRON = ((Poucentages_inscrits$MACRON/Poucentages_inscrits$inscrits)*100)
+Poucentages_inscrits[6:7] = list(NULL) # remove old column
+
+# extract in csv
+write.csv(Poucentages_inscrits, "R_P_L_T2_2.csv")
+```
+
+Ensuite j'ai effectué la jointure déjà expliquée précédemment pour obtenir des cartes avec rupture de Jenks à 6 classes pour 
+
+
 ### Discrétisation 
 
 Lors de la création de cartes, il faut bien choisir ses classes et les bons modes de [discrétisation](https://mesange.educagri.fr/htdocs/sigea/supports/QGIS/distance/perfectionnement/M03_AnalyseThematique_gen_web/co/20_N2_Mode_intervalle.html). Je me suis basé sur le lien précédent pour la compréhension de ce principe.
@@ -269,9 +295,74 @@ mapview(
 
 Après avoir ajouter ce nouvel ID dans mes bureaux de 2017 je suis à même de les joindre avec les bureaux de 2012. Ce nouveau fichier s'appelle ```bureaux_avec_ID_PS_2012.geojson```. Grâce à celui j'ai donc la possibilité de joindre mes résultats électoraux de 2017 aux bureaux de 2012 et donc aux données sociologiques. En effet grâce au package [SpReapportion](https://github.com/joelgombin/spReapportion/tree/master/R) de @joelgombin, j'ai la possibilité de ventiler les données sociologiques, qui sont à l'échelle [IRIS](https://fr.wikipedia.org/wiki/Îlots_regroupés_pour_l%27information_statistique) à l'intérieur des bureaux électoraux de 2012.  
 
+Afin de vraiment présenter mon travail, j'ai décidé de refaire mes données IRIS moi-même, en y ajoutant l'âge et les données sur la population.
+
 ```R
+# Packages needed
+library(readr)
+library(dplyr)
+# Import data set
+IRIS <- read_delim("~/Documents/MA2/Mémoire/final_donnees_soc_only/data_raw/base-ic-evol-struct-pop-2011.csv", 
+                                                  ";", escape_double = FALSE, trim_ws = TRUE)
+liste_variable <- read_delim("~/Documents/MA2/Mémoire/final_donnees_soc_only/data_raw/liste_variable.csv", 
+                                 ";", escape_double = FALSE, trim_ws = TRUE)
+# Clean liste variables
+liste_variable = liste_variable[-c(1:10), ]
+
+# Clean the rows
+IRIS_clean_row = IRIS [-c(1:4), ] # Delete first 4 rows
+colnames(IRIS_clean_row) = as.character(unlist(IRIS_clean_row[1,])) # unlist the row
+IRIS_clean_row = IRIS_clean_row[-1, ] # Delete the first row to set the second one as header
+IRIS_clean_row = IRIS_clean_row [which (IRIS_clean_row$DEP == '75'), ] # keep only Paris
+
+# Clean the columns
+IRIS_clean_col = IRIS_clean_row
+IRIS_clean_col = IRIS_clean_col %>%
+  select(1,6,9,13:23,53:61,80:84)
+IRIS_clean_col =  IRIS_clean_col %>%
+  rename(
+    POP = P11_POP ,
+    POP02 = P11_POP0002,
+    POP0305 = P11_POP0305,
+    POP0610 = P11_POP0610,
+    POP1117 = P11_POP1117,
+    POP1824 = P11_POP1824,
+    POP2539 = P11_POP2539,
+    POP4054 = P11_POP4054,
+    POP5564 = P11_POP5564,
+    POP6579 = P11_POP6579,
+    POP80P = P11_POP80P,
+    C15P = C11_POP15P,
+    CS1 = C11_POP15P_CS1,
+    CS2 = C11_POP15P_CS2,
+    CS3 = C11_POP15P_CS3,
+    CS4 = C11_POP15P_CS4,
+    CS5 = C11_POP15P_CS5,
+    CS6 = C11_POP15P_CS6,
+    CS7 = C11_POP15P_CS7,
+    CS8 = C11_POP15P_CS8,
+    POPFR = P11_POP_FR,
+    POPETR = P11_POP_ETR,
+    POPIMM = P11_POP_IMM,
+    POPMEN = P11_PMEN,
+    POPHORMEN = P11_PHORMEN 
+  )
+# extract as csv
+write.csv(IRIS_clean_col, "IRIS_CLEAN_age_pop.csv")
+```
+
+J'ai ensuite lancé la ventilation via :
+```R
+
 ##### required packages #####
 
+install.packages("sp")
+install.packages("sf")
+install.packages("mapview")
+install.packages("devtools")
+install.packages("rgdal")
+install.packages("dplyr")
+devtools::install_github("joelgombin/spReapportion")
 library(sp)
 library(sf)
 library(mapview)
@@ -279,10 +370,8 @@ library(devtools)
 library(rgdal)
 library(spReapportion)
 library(dplyr)
-library(readr)
 
 ##### Open the datas #####
-
 load("~/Documents/MA2/Mémoire/jointure/data_raw/ParisIris.rda")
 load("~/Documents/MA2/Mémoire/jointure/data_raw/ParisPollingStations2012.rda")
 load("~/Documents/MA2/Mémoire/jointure/data_raw/RP_2011_CS8_Paris.rda")
@@ -293,15 +382,13 @@ R_P_L_2_PI <- read_csv("~/Documents/MA2/Mémoire/jointure/data_raw/R_P_L_2_PI.cs
                        col_types = cols(X1 = col_skip(), bureau = col_double()))
 
 ##### Process data #####
-
 new_IRIS = merge(RP_2011_CS8_Paris, iriscleanagepop) # Merge CS and age
 new_IRIS = new_IRIS %>% # Keep only âge
   select(1,13:23)
-catégories_sociales_bureaux2012 = spReapportion(ParisIris, ParisPollingStations2012, RP_2011_CS8_Paris, "DCOMIRIS", "ID", "IRIS") # the reaportion with spReaportion from https://github.com/joelgombin/spReapportion made by Joël Gombin
+catécatégories_sociales_bureaux2012 = spReapportion(ParisIris, ParisPollingStations2012, RP_2011_CS8_Paris, "DCOMIRIS", "ID", "IRIS") # the reaportion with spReaportion from https://github.com/joelgombin/spReapportion made by Joël Gombin
 age_bureaux2012 = spReapportion(ParisIris, ParisPollingStations2012, new_IRIS, "DCOMIRIS", "ID", "IRIS")
 
 ##### create newdata #####
-
 ps2012 = ParisPollingStations2012
 ps2017 = bureaux_ID_PS
 CS2012 = catégories_sociales_bureaux2012
@@ -309,34 +396,258 @@ age2012 = age_bureaux2012
 ps2012_sf = sf ::st_as_sf(ps2012) # need as sf for the following
 
 ##### Join the census data and the social data #####
-
 names(ps2017)[names(ps2017) == "nouvel_ID"] <- "ID" # rename col to have the same for the joining 
 ps2012_2017_sf = merge(x = ps2012_sf, y = ps2017, by = "ID", all.x = TRUE) # merge ParisPollingStations2012 with ParisPollingStations2017
 CS_2012_2017 = merge(x = CS2012, y = ps2012_2017_sf, by = "ID", all.x = TRUE) # merge Parispollingstations2012-2017 with sociological data
 final_data = merge(x = CS_2012_2017, y = age2012, by = "ID", all.x = TRUE) # Add the age data
 
 ##### Clean Data #####
-
 final_data_clean = final_data %>%
   select(2:10,23,27:37)
 final_data_clean = final_data_clean[,c(10,1:9,11:21)] # set id_bv as first column
 names(final_data_clean)[names(final_data_clean) == "id_bv"] = "bureau" # rename id_bv as bureau
 CS_age_resultats2017 = merge(x = final_data_clean, y = R_P_L_2_PI, by = "bureau", all.x = TRUE) # merge CS with results
 CS_age_resultats2017 = CS_age_resultats2017[-c(881:894), ] # Delete rows where bureau doesn't exist
-# sum of CS and age in new column to have a round percentage
-CS_age_resultats2017$sommeCS = (CS_age_resultats2017$C11_POP15P_CS1 +  CS_age_resultats2017$C11_POP15P_CS2 + CS_age_resultats2017$C11_POP15P_CS3 + CS_age_resultats2017$C11_POP15P_CS4 + CS_age_resultats2017$C11_POP15P_CS5 + CS_age_resultats2017$C11_POP15P_CS6 + CS_age_resultats2017$C11_POP15P_CS7 + CS_age_resultats2017$C11_POP15P_CS8)
-CS_age_resultats2017$sommeage = (CS_age_resultats2017$POP1824 + CS_age_resultats2017$POP2539 + CS_age_resultats2017$POP4054 + CS_age_resultats2017$POP5564 + CS_age_resultats2017$POP6579 + CS_age_resultats2017$POP80P)
 CS_age_resultats2017 = CS_age_resultats2017 %>% # convert CS to percentile
-  mutate_at(vars( C11_POP15P_CS1 :C11_POP15P_CS8), funs(. / sommeCS * 100)  
+  mutate_at(vars( C11_POP15P_CS1 :C11_POP15P_CS8), funs(. / C11_POP15P * 100)  
             ) 
 CS_age_resultats2017 = CS_age_resultats2017 %>% # convert age to percentile
-  mutate_at(vars(POP1824:POP80P), funs(. / (sommeage) * 100)
-  )
-CS_age_resultats2017[11:15] = list(NULL)
-
+  mutate_at(vars(POP02:POP80P), funs(. / POP * 100)
+            )
+	    
 ##### Export #####
-
-write.csv(CS_age_resultats2017, "CS_age_resultats_2017_vrai.csv")
-
+write.csv(CS_age_resultats2017, "CS_age_resultats_2017")
 ```
+
+### Script pour toutes les régressions linéaires multiples:
+```R
+library(car)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(tidyverse)
+
+##### Open data #####
+
+CS_age_resultats_2017_centralite <- read_csv("~/Documents/MA2/Mémoire/all_regressions/data_raw/CS_age_resultats_2017_centralite.csv", 
+                                                  col_types = cols(C11_POP15P = col_skip(), 
+                                                                            X1 = col_skip()))
+
+##### Clean data #####
+temp_cs  = CS_age_resultats_2017_centralite # Work on a temporary dataset
+temp_cs = temp_cs %>%
+  rename( CS1 = C11_POP15P_CS1,
+          CS2 = C11_POP15P_CS2,
+          CS3 = C11_POP15P_CS3,
+          CS4 = C11_POP15P_CS4,
+          CS5 = C11_POP15P_CS5,
+          CS6 = C11_POP15P_CS6,
+          CS7 = C11_POP15P_CS7,
+          CS8 = C11_POP15P_CS8,
+          "18-24 ans" = POP1824,
+          "25-39 ans" = POP2539,
+          "40-54 ans" = POP4054,
+          "55-64 ans" = POP5564,
+          "65-79 ans" = POP6579,
+          "80 ans" = POP80P,
+          Arthaud = PARTHAUD ,
+          Asselineau = PASSELINEAU ,
+          Cheminade = PCHEMINADE ,
+          Dupont_Aignan = PDUPONTAIGNAN ,
+          Fillon = PFILLON ,
+          Hamon = PHAMON ,
+          Lassalle = PLASSALLE ,
+          Lepen = PLEPEN ,
+          Macron = PMACRON ,
+          Melenchon = PMELENCHON ,
+          Poutou = PPOUTOU
+  )
+
+######
+table_cor = round(cor(temp_cs[2:27]), 2) # correlation table to see all correllations between all variables
+write.csv(table_cor, "tablecor.csv")
+
+# Arthaud
+Arthaud_CS = lm(temp_cs$Arthaud ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`80 ans` + temp_cs$distance, data=temp_cs)
+Arthaud_CStout = lm(temp_cs$Arthaud ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+summary(Arthaud_CS) # show results
+summary(Arthaud_CStout)
+
+# Asselineau
+Asselineau_CS = lm(temp_cs$Asselineau ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans`, data=temp_cs)
+Asselineau_CStout = lm(temp_cs$Asselineau ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+summary(Asselineau_CS) # show results
+summary(Asselineau_CStout)
+
+# Cheminade
+Cheminade_CS = lm(temp_cs$Cheminade ~  temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` +temp_cs$distance, data=temp_cs)
+Cheminade_CStout = lm(temp_cs$Cheminade ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+summary(Cheminade_CS) # show results
+summary(Cheminade_CStout)
+
+# Dupont-Aignan
+Dupont_Aignan_CS = lm(temp_cs$Dupont_Aignan ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$distance, data=temp_cs)
+Dupont_Aignan_CStout = lm(temp_cs$Dupont_Aignan ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+summary(Dupont_Aignan_CS)
+summary(Dupont_Aignan_CStout)
+
+
+# Fillon
+Fillon_CS = lm(temp_cs$Fillon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` +temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$distance, data=temp_cs)
+Fillon_CStout = lm(temp_cs$Fillon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+summary(Fillon_CS)
+summary(Fillon_CStout)
+
+# Hamon
+Hamon_CS = lm(temp_cs$Hamon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$distance, data=temp_cs)
+Hamon_CStout = lm(temp_cs$Hamon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+summary(Hamon_CS)
+summary(Hamon_CStout)
+
+
+
+# Lassalle
+Lassalle_CS = lm(temp_cs$Lassalle ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`40-54 ans` + temp_cs$distance, data=temp_cs)
+Lassalle_CStout = lm(temp_cs$Lassalle ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+summary(Lassalle_CS)
+summary(Lassalle_CStout)
+
+# Lepen
+Lepen_CS = lm(temp_cs$Lepen ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` +  temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$distance, data=temp_cs)
+Lepen_CStout = lm(temp_cs$Lepen ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+summary(Lepen_CS)
+summary(Lepen_CStout)
+
+# Macron
+Macron_CS = lm(temp_cs$Macron ~  temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$distance, data=temp_cs)
+Macron_CStout = lm(temp_cs$Macron ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+summary(Macron_CS)
+summary(Macron_CStout)
+
+# Melenchon
+Melenchon_CS = lm(temp_cs$Melenchon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` +temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$distance, data=temp_cs)
+Melenchon_CStout = lm(temp_cs$Melenchon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+summary(Melenchon_CS)
+summary(Melenchon_CStout)
+
+# Poutou
+Poutou_CS = lm(temp_cs$Poutou ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` +  temp_cs$distance, data=temp_cs)
+Poutou_CStout = lm(temp_cs$Poutou ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+summary(Poutou_CS)
+summary(Poutou_CStout)
+```
+
+### script ACP et carte des scores :
+
+Je me suis basé sur [ce site](http://www.sthda.com/french/articles/38-methodes-des-composantes-principales-dans-r-guide-pratique/73-acp-analyse-en-composantes-principales-avec-r-l-essentiel/) pour réaliser le script suivant :
+
+```R
+# Packages needed
+library(corrplot)
+library(dplyr)
+library(factoextra)
+library(ggfortify)
+library(mapview)
+library(readr)
+library(rgdal)
+library(tidyverse)
+
+# Inspire from here : http://www.sthda.com/french/articles/38-methodes-des-composantes-principales-dans-r-guide-pratique/79-acp-dans-r-prcomp-vs-princomp/#variables-supplementaires
+
+CS_age_resultats_2017 <- read_csv("~/Documents/MA2/Mémoire/ACP/data_raw/CS_age_resultats_2017.csv", 
+                                         col_types = cols(X1 = col_skip()))
+liste_variable <- read_delim("~/Documents/MA2/Mémoire/ACP/data_raw/liste_variable.csv", 
+                             ";", escape_double = FALSE, trim_ws = TRUE)
+temp_cs  = CS_age_resultats_2017 # Work on a temporary dataset
+temp_cs = temp_cs %>%
+  rename( CS1 = C11_POP15P_CS1,
+          CS2 = C11_POP15P_CS2,
+          CS3 = C11_POP15P_CS3,
+          CS4 = C11_POP15P_CS4,
+          CS5 = C11_POP15P_CS5,
+          CS6 = C11_POP15P_CS6,
+          CS7 = C11_POP15P_CS7,
+          CS8 = C11_POP15P_CS8,
+          "18-24 ans" = POP1824,
+          "25-39 ans" = POP2539,
+          "40-54 ans" = POP4054,
+          "55-64 ans" = POP5564,
+          "65-79 ans" = POP6579,
+          "80 ans" = POP80P,
+          Arthaud = PARTHAUD ,
+          Asselineau = PASSELINEAU ,
+          Cheminade = PCHEMINADE ,
+          Dupont_Aignan = PDUPONTAIGNAN ,
+          Fillon = PFILLON ,
+          Hamon = PHAMON ,
+          Lassalle = PLASSALLE ,
+          Lepen = PLEPEN ,
+          Macron = PMACRON ,
+          Melenchon = PMELENCHON ,
+          Poutou = PPOUTOU
+          )
+temp_res = temp_cs
+
+############################# PCA on results ##############################
+
+temp_res.pca = prcomp(temp_res[,c(22:32)], center = TRUE,scale. = TRUE)
+summary(temp_res.pca) # PC1 explains 40% of the total variance and PC2 13,5 %, with these two we have half of the variance
+str(temp_res.pca) # Have a look at the PCA object, $center: center point / $scale: scaling / sdev : standard deviation of each PC, $rotation : the ralationship (correlation and anticorrelatio etc) between the initial variables and the PC, $x : the values of each sample in terms of the principal components.
+
+##### Get Eigen values and other #####
+eig.val_res = get_eigenvalue(temp_res.pca)
+fviz_eig(temp_res.pca, addlabels = TRUE, ylim = c(0,50)) # Screeplot
+var_res = get_pca_var(temp_res.pca)
+var_res$coord # coordinate of variables to make a cloud of the points
+var_res$cos2 # cosinus ^2 of the variables ==> quality of representation of the variables on the graph
+var_res$contrib # % of variables and CP
+
+##### correlation circle and other visualization #####
+head(var_res$coord, 8) 
+visualization = fviz_pca_var(temp_res.pca, col.var = "black", geom=c("point", "text")) +
+  labs(title ="Analyse en Composantes Principales", x = "CP1", y = "CP2") # visualisation of variables ==> Correct way
+quanti_suppl_cs = temp_res[,3:10] # keep only columns I want to add, here CS
+quanti_coord_cs = cor(quanti_suppl_cs, temp_res.pca$x) # find coordinate
+fviz_add(visualization, quanti_coord_cs, color ="blue", geom=c("point","text")) # add variable quanti
+
+temp_res.cor = cor(temp_res[,c(22:32)]) # table of correlation for the elections results
+corrplot(var_res$cos2, is.corr = FALSE) # visualisation cos2 circle of the variables on all the dimensions (PC)
+fviz_contrib(temp_res.pca, choice = "var", axes = 1:4, top = 5) # If I want to show only the top 5 variables contributing the most to the two first PC
+autoplot(temp_res.pca) # plot all polling stations on PC1 and PC2 (fill point)
+autoplot(temp_res.pca, data = temp_res.pca, shape = TRUE, label.size = 3) # plot all polling stations on PC1 and PC2
+
+# Extract scores with an ID to map them
+write.csv(temp_res.pca$x, "scoresACP_res.csv") # extract scores
+temp_res <- tibble::rowid_to_column(temp_res, "ID") # Initiate same ID
+scoresACP_res <- tibble::rowid_to_column(scoresACP_res, "ID") # Initiate same ID
+mergedata  = merge(temp_res, scoresACP_res) # join scores with bureau to map them
+scoresACP_res_carto = mergedata %>% # choose only bureau and PC
+  select (2,35:45)
+write.csv(scoresACP_res_carto, "scoresACP_res_carto.csv") # extract to csv and map them in Qgis
+
+arrondissements <- readOGR(dsn = "./data_raw/arrondissements_retouches.shp", layer = "arrondissements_retouches")
+arrondissements = sf::st_as_sf(arrondissements)
+
+
+meuse = scores_carto_bureau
+mapview(meuse,map.types = "CartoDB", zcol = "scoresACP_res_carto_PC1", col.regions = c("red", "grey", "snow"),
+        layer.name = c("PC1")) +
+  mapview(meuse,map.types = "CartoDB", zcol = "scoresACP_res_carto_PC2", col.regions = c("green", "grey", "snow"),
+          layer.name = "PC2") +
+  mapview(meuse,map.types = "CartoDB", zcol = c( "scoresACP_res_carto_PC3"), col.regions = c("blue", "grey", "snow"),
+          layer.name = "PC3") +
+  mapview(
+    arrondissements,
+    map.types = "CartoDB",
+    col.regions = "green", 
+    label = arrondissements, 
+    alpha.regions= 0, 
+    color = "green", 
+    legend = TRUE, 
+    layer.name = "arrondissements",
+    homebutton = FALSE,
+    lwd = 5
+  )
+```
+
 
