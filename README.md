@@ -10,8 +10,11 @@
 Les données brutes sont disponibles dans la section **Raw_data** de ce repo tandis que les résultats sont mis dans **Clean_data** et enfin les cartes produites sont dans **Maps**.
 
 ## Obtention des données
-
+##### Données électorales
 Les données brutes que j'ai utilisées proviennent [d'OpenData](https://public.opendatasoft.com/explore/dataset/election-presidentielle-2017-resultats-par-bureaux-de-vote-tour-1/table/?disjunctive.libelle_de_la_commune), mais ont été retravaillées par [@Aktiur](https://github.com/aktiur/resultats-electoraux). Les données exploitées sont les données en Large.
+##### Données sociologiques
+Celles-ci proviennent du site de l'[INSEE](https://www.insee.fr/fr/statistiques/2028584), 
+
 
 ## Traitement des données
 
@@ -293,62 +296,6 @@ mapview(
 
 Après avoir ajouter ce nouvel ID dans mes bureaux de 2017 je suis à même de les joindre avec les bureaux de 2012. Ce nouveau fichier s'appelle ```bureaux_avec_ID_PS_2012.geojson```. Grâce à celui j'ai donc la possibilité de joindre mes résultats électoraux de 2017 aux bureaux de 2012 et donc aux données sociologiques. En effet grâce au package [SpReapportion](https://github.com/joelgombin/spReapportion/tree/master/R) de @joelgombin, j'ai la possibilité de ventiler les données sociologiques, qui sont à l'échelle [IRIS](https://fr.wikipedia.org/wiki/Îlots_regroupés_pour_l%27information_statistique) à l'intérieur des bureaux électoraux de 2012.  
 
-Afin de vraiment présenter mon travail, j'ai décidé de refaire mes données IRIS moi-même, en y ajoutant l'âge et les données sur la population.
-
-```R
-# Packages needed
-library(readr)
-library(dplyr)
-# Import data set
-IRIS <- read_delim("~/Documents/MA2/Mémoire/final_donnees_soc_only/data_raw/base-ic-evol-struct-pop-2011.csv", 
-                                                  ";", escape_double = FALSE, trim_ws = TRUE)
-liste_variable <- read_delim("~/Documents/MA2/Mémoire/final_donnees_soc_only/data_raw/liste_variable.csv", 
-                                 ";", escape_double = FALSE, trim_ws = TRUE)
-# Clean liste variables
-liste_variable = liste_variable[-c(1:10), ]
-
-# Clean the rows
-IRIS_clean_row = IRIS [-c(1:4), ] # Delete first 4 rows
-colnames(IRIS_clean_row) = as.character(unlist(IRIS_clean_row[1,])) # unlist the row
-IRIS_clean_row = IRIS_clean_row[-1, ] # Delete the first row to set the second one as header
-IRIS_clean_row = IRIS_clean_row [which (IRIS_clean_row$DEP == '75'), ] # keep only Paris
-
-# Clean the columns
-IRIS_clean_col = IRIS_clean_row
-IRIS_clean_col = IRIS_clean_col %>%
-  select(1,6,9,13:23,53:61,80:84)
-IRIS_clean_col =  IRIS_clean_col %>%
-  rename(
-    POP = P11_POP ,
-    POP02 = P11_POP0002,
-    POP0305 = P11_POP0305,
-    POP0610 = P11_POP0610,
-    POP1117 = P11_POP1117,
-    POP1824 = P11_POP1824,
-    POP2539 = P11_POP2539,
-    POP4054 = P11_POP4054,
-    POP5564 = P11_POP5564,
-    POP6579 = P11_POP6579,
-    POP80P = P11_POP80P,
-    C15P = C11_POP15P,
-    CS1 = C11_POP15P_CS1,
-    CS2 = C11_POP15P_CS2,
-    CS3 = C11_POP15P_CS3,
-    CS4 = C11_POP15P_CS4,
-    CS5 = C11_POP15P_CS5,
-    CS6 = C11_POP15P_CS6,
-    CS7 = C11_POP15P_CS7,
-    CS8 = C11_POP15P_CS8,
-    POPFR = P11_POP_FR,
-    POPETR = P11_POP_ETR,
-    POPIMM = P11_POP_IMM,
-    POPMEN = P11_PMEN,
-    POPHORMEN = P11_PHORMEN 
-  )
-# extract as csv
-write.csv(IRIS_clean_col, "IRIS_CLEAN_age_pop.csv")
-```
-
 J'ai ensuite lancé la ventilation via :
 ```R
 
@@ -489,7 +436,6 @@ Dupont_Aignan_CStout = lm(temp_cs$Dupont_Aignan ~ temp_cs$CS1 + temp_cs$CS2 + te
 summary(Dupont_Aignan_CS)
 summary(Dupont_Aignan_CStout)
 
-
 # Fillon
 Fillon_CS = lm(temp_cs$Fillon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` +temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$distance, data=temp_cs)
 Fillon_CStout = lm(temp_cs$Fillon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
@@ -501,8 +447,6 @@ Hamon_CS = lm(temp_cs$Hamon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$
 Hamon_CStout = lm(temp_cs$Hamon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
 summary(Hamon_CS)
 summary(Hamon_CStout)
-
-
 
 # Lassalle
 Lassalle_CS = lm(temp_cs$Lassalle ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`40-54 ans` + temp_cs$distance, data=temp_cs)
