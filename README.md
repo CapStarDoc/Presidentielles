@@ -7,7 +7,7 @@
 
 ## Organisation
 
-Les données brutes sont disponibles dans la section **Raw_data** de ce repo tandis que les résultats sont mis dans **Clean_data** et enfin les cartes produites sont dans **Maps**.
+Les données sont disponibles dans la section **Raw_data** de ce repositorie tandis que les cartes produites sont dans **Maps**.
 
 ## Obtention des données
 ##### Données électorales
