@@ -165,6 +165,51 @@ Ce matin je transforme mes nombres de votes en pourcentage grâce à R. J'ai ré
 
 Je me suis basé sur [ça](https://stackoverflow.com/questions/6286313/remove-an-entire-column-from-a-data-frame-in-r) pour enlever les colonnes.
 
+### Discrétisation 
+
+Lors de la création de cartes, il faut bien choisir ses classes et les bons modes de [discrétisation](https://mesange.educagri.fr/htdocs/sigea/supports/QGIS/distance/perfectionnement/M03_AnalyseThematique_gen_web/co/20_N2_Mode_intervalle.html). Je me suis basé sur le lien précédent pour la compréhension de ce principe.
+
+"La discrétisation est l’opération qui permet de découper en classes une série de variables qualitatives ou de variables quantitatives. Cette opération simplifie l’information en regroupant les objets géographiques présentant les mêmes caractéristiques en classes distinctes." Cette définition provient d'[Hypergéo](http://www.hypergeo.eu/spip.php?article374).
+
+Dans QGIS il existe 5 mode de discrétisation qui répondent à certaines règles :
+
+#### Règles 
+* les classes doivent couvrir l'ensemble des données
+* il faut éviter les classes vides
+* il faut déterminer la forme principale de la distribution
+
+![](/images/distribution.png)
+
+#### Les modes et utilisation 
+
+* intervalles égaux : amplitude entre les valeurs min et max est divisée par le nombre de classes
+
+==> **distribution uniforme ou symétrique**.
+
+Autrement dit les valeurs des données sont réparties uniformément sur toute l'amplitude de la série. Ce mode n'est pas adapté si les valeurs extrêmes s'écartent de la série.
+
+* quantiles (effectifs égaux) : chaque classe répresente même nombre de données soit 1/n de l'effectif des données (n étant le nombre de classes)
+
+==> **toutes les formes de distribution** (à utiliser quand distribution uniforme ou multimodale).
+
+Il implique une répartition équilibrée des données.
+
+* Ruptures naturelles (Jenks) : Minimisation des variances intra-classes. Pour chaque classes les valeurs sont les plus proches (tendance homogène) et les classes sont les plus éloignées possibles (tendance hétérogène)
+
+Proche des seuils observés, donne généralement de bons résultats pour **toutes les distributions** (à utiliser avec multimodale) mais n'est pas conseillée malgré tout lorsque la distribution est trop hétérogène. 
+
+* Ecart-type (std dev) : chaque classe est déterminée selon un fraction ou un multiple de l'écart-type par rapport à la moyenne. L'[écart-type](https://fr.wikipedia.org/wiki/Écart_type) mesure la dispersion d'une série de valeurs autour de leur moyenne (ici toutes les valeurs)
+
+==> **distribution symétrique, Gauss** (à utiliser avec une distribution symétrique ou très peu dissymétrique)
+
+* Jolies ruptures : liée à la fonction [pretty](https://www.rdocumentation.org/packages/base/versions/3.5.3/topics/pretty) de R, permet d'obtenir des intervalles de classe équidistants arrondis (jolies valeurs) et couvrant l'ensemble des valeurs.
+
+Se rapproche des intervalles égaux, avec classes adaptées aux extrémités de la distribution (à utiliser pour distribution uniforme ou symétrique)
+
+* pour distribution asymétrique à gauche : progression géométrique qui est pas dans Qgis, donc on va utiliser des modes pour multimodale (quantile ou Jenks) ou utiliser la colonne expression pour transformer l'échelle de la valeur à discrétiser. (on va utiliser fonction log ou carrée)
+
+Un petit récapitulatif : Mode [Cheatsheet](https://mesange.educagri.fr/htdocs/sigea/supports/QGIS/distance/perfectionnement/M03_AnalyseThematique_gen_web/res/d_25_20_discretisation.pdf).
+
 
 ### Ventilation
 
@@ -172,35 +217,18 @@ Pour pouvoir mettre en commun mes données sociologiques et électorales je deva
 
 Pour cela j'ai réalisé une carte intéractive qui me permet de visualiser les deux GeoJson de manière simultanée, et en parallèle j'utilisais la table de mes bureaux de 2017 dans QGIS. Cela m'a permis d'ajouter manuellement un ID de 2012 pour chaque bureau de 2017. Cette étape s'est avérée très longue et aurait pu être automatisée, seulement le niveau demandé pour cette étape était plus élevé que mes compétences.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ```R
 # required Packages
 library(rgdal)
 library(sf)
 library(mapview)
 
-# read geojson
-bureaux_clean_ID_geojson <- readOGR(dsn = "./data_raw/bureaux_clean_ID.geojson", layer = "OGRGeoJSON")
+# Processing
+bureaux_clean_ID_geojson <- readOGR(dsn = "./data_raw/bureaux_clean_ID.geojson", layer = "OGRGeoJSON") # read geojson
+psgjsn <- ParisPollingStations2012 # Data I want to add as layer
+bgjsn <- bureaux_clean_ID_geojson # Data I want to add as layer
 
-# Data I want to add as layer
-psgjsn <- ParisPollingStations2012
-bgjsn <- bureaux_clean_ID_geojson
-
+# Visualization
 mapview(
   bgjsn, 
   map.types = "CartoDB", 
@@ -237,43 +265,78 @@ mapview(
     homebutton = FALSE,
     lwd = 5
   )
+```
 
-test = ParisPollingStations2012_sf # Initiate new dataframe for the test
-essai = bureaux_clean_ID_geojson # Initiate new dataframe for the test
+Après avoir ajouter ce nouvel ID dans mes bureaux de 2017 je suis à même de les joindre avec les bureaux de 2012. Ce nouveau fichier s'appelle ```bureaux_avec_ID_PS_2012.geojson```. Grâce à celui j'ai donc la possibilité de joindre mes résultats électoraux de 2017 aux bureaux de 2012 et donc aux données sociologiques. En effet grâce au package [SpReapportion](https://github.com/joelgombin/spReapportion/tree/master/R) de @joelgombin, j'ai la possibilité de ventiler les données sociologiques, qui sont à l'échelle [IRIS](https://fr.wikipedia.org/wiki/Îlots_regroupés_pour_l%27information_statistique) à l'intérieur des bureaux électoraux de 2012.  
 
+```R
+##### required packages #####
 
-test$nouvelID = NA # Create a new column for the new ID
-essai$nouvelID = NA # Create a new column for the new ID
+library(sp)
+library(sf)
+library(mapview)
+library(devtools)
+library(rgdal)
+library(spReapportion)
+library(dplyr)
+library(readr)
 
-# Edit a cell in my data frame (made it based in the sens of ID tiniest to largest)
-# Add new bureaux with ID from PARISPollingsStations 2012
+##### Open the datas #####
+
+load("~/Documents/MA2/Mémoire/jointure/data_raw/ParisIris.rda")
+load("~/Documents/MA2/Mémoire/jointure/data_raw/ParisPollingStations2012.rda")
+load("~/Documents/MA2/Mémoire/jointure/data_raw/RP_2011_CS8_Paris.rda")
+iriscleanagepop <- read_csv("~/Documents/MA2/Mémoire/jointure/data_raw/IRIS_CLEAN_age_pop.csv", 
+                                 col_types = cols(X1 = col_skip()))
 bureaux_ID_PS <- readOGR(dsn = "./data_raw/bureaux_avec_ID_PS_2012.geojson", layer = "OGRGeoJSON")
-tmp = bureaux_ID_PS
-mapview(
-  tmp, 
-  map.types = "CartoDB", 
-  col.regions = "red", 
-  label = bgjsn$geometry,
-  alpha.regions= 0,
-  color = "red", 
-  legend = TRUE, 
-  layer.name = "2017", 
-  homebutton = FALSE, 
-  lwd = 2
-)
-# See the two dataframe 
-test_sf = sf::st_as_sf(test)
-tmp_sf = sf ::st_as_sf(tmp)
+R_P_L_2_PI <- read_csv("~/Documents/MA2/Mémoire/jointure/data_raw/R_P_L_2_PI.csv", 
+                       col_types = cols(X1 = col_skip(), bureau = col_double()))
 
-# ?? Clean tmp to have the same number of row
-# ?? supprimer object ID 199,211,655,1366,2122,3022,200000,207777,14000,1522,2788,67111,68444,80111,7211,7388, 4833,14999
+##### Process data #####
 
-# rename the new col to have the same ID to merge the two data
-names(tmp)[names(tmp) == "nouvel_ID"] <- "ID"
+new_IRIS = merge(RP_2011_CS8_Paris, iriscleanagepop) # Merge CS and age
+new_IRIS = new_IRIS %>% # Keep only âge
+  select(1,13:23)
+catégories_sociales_bureaux2012 = spReapportion(ParisIris, ParisPollingStations2012, RP_2011_CS8_Paris, "DCOMIRIS", "ID", "IRIS") # the reaportion with spReaportion from https://github.com/joelgombin/spReapportion made by Joël Gombin
+age_bureaux2012 = spReapportion(ParisIris, ParisPollingStations2012, new_IRIS, "DCOMIRIS", "ID", "IRIS")
 
-# merge the two dataframe
-donnees_jointes = merge(x = test, y = tmp, by = "ID", all.x = TRUE)
-# write as csv
-write.csv(donnees_jointes, "donneesjointes.csv")
+##### create newdata #####
+
+ps2012 = ParisPollingStations2012
+ps2017 = bureaux_ID_PS
+CS2012 = catégories_sociales_bureaux2012
+age2012 = age_bureaux2012
+ps2012_sf = sf ::st_as_sf(ps2012) # need as sf for the following
+
+##### Join the census data and the social data #####
+
+names(ps2017)[names(ps2017) == "nouvel_ID"] <- "ID" # rename col to have the same for the joining 
+ps2012_2017_sf = merge(x = ps2012_sf, y = ps2017, by = "ID", all.x = TRUE) # merge ParisPollingStations2012 with ParisPollingStations2017
+CS_2012_2017 = merge(x = CS2012, y = ps2012_2017_sf, by = "ID", all.x = TRUE) # merge Parispollingstations2012-2017 with sociological data
+final_data = merge(x = CS_2012_2017, y = age2012, by = "ID", all.x = TRUE) # Add the age data
+
+##### Clean Data #####
+
+final_data_clean = final_data %>%
+  select(2:10,23,27:37)
+final_data_clean = final_data_clean[,c(10,1:9,11:21)] # set id_bv as first column
+names(final_data_clean)[names(final_data_clean) == "id_bv"] = "bureau" # rename id_bv as bureau
+CS_age_resultats2017 = merge(x = final_data_clean, y = R_P_L_2_PI, by = "bureau", all.x = TRUE) # merge CS with results
+CS_age_resultats2017 = CS_age_resultats2017[-c(881:894), ] # Delete rows where bureau doesn't exist
+# sum of CS and age in new column to have a round percentage
+CS_age_resultats2017$sommeCS = (CS_age_resultats2017$C11_POP15P_CS1 +  CS_age_resultats2017$C11_POP15P_CS2 + CS_age_resultats2017$C11_POP15P_CS3 + CS_age_resultats2017$C11_POP15P_CS4 + CS_age_resultats2017$C11_POP15P_CS5 + CS_age_resultats2017$C11_POP15P_CS6 + CS_age_resultats2017$C11_POP15P_CS7 + CS_age_resultats2017$C11_POP15P_CS8)
+CS_age_resultats2017$sommeage = (CS_age_resultats2017$POP1824 + CS_age_resultats2017$POP2539 + CS_age_resultats2017$POP4054 + CS_age_resultats2017$POP5564 + CS_age_resultats2017$POP6579 + CS_age_resultats2017$POP80P)
+CS_age_resultats2017 = CS_age_resultats2017 %>% # convert CS to percentile
+  mutate_at(vars( C11_POP15P_CS1 :C11_POP15P_CS8), funs(. / sommeCS * 100)  
+            ) 
+CS_age_resultats2017 = CS_age_resultats2017 %>% # convert age to percentile
+  mutate_at(vars(POP1824:POP80P), funs(. / (sommeage) * 100)
+  )
+CS_age_resultats2017[11:15] = list(NULL)
+
+##### Export #####
+
+write.csv(CS_age_resultats2017, "CS_age_resultats_2017_vrai.csv")
+
 ```
 
