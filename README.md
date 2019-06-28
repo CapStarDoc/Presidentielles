@@ -148,15 +148,13 @@ Après cette étape, j'ajoute mes données dans QGIS. Comme je disais, il y a un
 
 Via la [calculatrice de champs de QGIS](https://gis.stackexchange.com/questions/148947/delete-a-space-with-the-field-caculator) j'ai pu modifié le ```hyphen``` à savoir ```"-"```de la colonne ```id_bv```, ce que j'ai mis en entrée est dans l'image ci-dessous : 
 
-![](/images/calculatrice_de_champs.png)
+![](/Images/calculatrice_de_champs.png)
 
 (Pour faire la même étape avec [R](https://stackoverflow.com/questions/46138530/removing-underscore-and-front-slash-from-columns-in-r))
 
 Ensuite j'ai dû réaliser à la main, la modification de chaque ID pour le faire correspondre. les 1-1 étant devenus 11 devaient être modifiés en 0101 par exemple. J'ai procédé petit à petit en vérifiant en parallèle que ma jointure concordait. La table que j'en ai tiré, je l'extrais en un nouveau shapefile ```bureaux_clean_shp.shp```. (D'ailleurs, il est assez perturbant de ne plus trouver dans QGIS3 la fonction save as comme sur les versions précédentes, j'ai eu réponse à ma question [ici](https://gis.stackexchange.com/questions/293781/no-save-as-in-qgis-3-2))
 
 Ce shapefile est simplement l'ensemble des contours de Paris (voir ci-dessous), sauf qu'à présent j'ai de quoi le lier à mes résultats des élections.
-
-![](/images/bureaux_clean_shp.png)
 
 Un nouveau problème est rencontré : la jointure a bien lieu dans QGIS, les deux tables sont liées et l'ensemble de tableau correspond, seulement lorsque je veux utilisé les données d'une des couches de la table ```R_P_L_1```, comme par exemple les résultats de Marine Lepen. Lorsque je suis dans les propriétés de la couche shapefile avec la jointure, QGIS me propose seulement les colonnes de la première table ```bureaux_clean_shp```, il s'agit d'un problème de type de données de ma table jointe. Toute mes données ```R_P_L1```sont passées en string, soit lors de l'import dans R, soit lors de l'extraction.
 
@@ -204,7 +202,7 @@ Dans QGIS il existe 5 mode de discrétisation qui répondent à certaines règle
 * il faut éviter les classes vides
 * il faut déterminer la forme principale de la distribution
 
-![](/images/distribution.png)
+![](/Images/distribution.png)
 
 #### Les modes et utilisation 
 
