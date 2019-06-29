@@ -365,7 +365,10 @@ write.csv(CS_age_resultats2017, "CS_age_resultats_2017")
 ```
 
 ### Script pour toutes les régressions linéaires multiples:
+
 ```R
+
+library(broom)
 library(car)
 library(dplyr)
 library(ggplot2)
@@ -409,74 +412,117 @@ temp_cs = temp_cs %>%
   )
 
 ######
-table_cor = round(cor(temp_cs[2:27]), 2) # correlation table to see all correllations between all variables
-write.csv(table_cor, "tablecor.csv")
+table_cor = round(cor(temp_cs[17:27]), 2) # correlation table to see all correllations between all variables
+write.csv(table_cor, "tablecor_cs_age.csv")
 
 # Arthaud
-Arthaud_CS = lm(temp_cs$Arthaud ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`80 ans` + temp_cs$distance, data=temp_cs)
-Arthaud_CStout = lm(temp_cs$Arthaud ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+Arthaud_CS = lm(temp_cs$Arthaud ~  temp_cs$CS2 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$distance, data=temp_cs)
 summary(Arthaud_CS) # show results
-summary(Arthaud_CStout)
-
+tidyArthaud = tidy (summary(Arthaud_CS))
+write.csv(tidyArthaud, "Arthaud.csv")
 # Asselineau
-Asselineau_CS = lm(temp_cs$Asselineau ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans`, data=temp_cs)
-Asselineau_CStout = lm(temp_cs$Asselineau ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+Asselineau_CS = lm(temp_cs$Asselineau ~  temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans`, data=temp_cs)
 summary(Asselineau_CS) # show results
-summary(Asselineau_CStout)
-
+tidyAsselineau = tidy (summary(Asselineau_CS))
+write.csv(tidyAsselineau, "Asselineau.csv")
 # Cheminade
-Cheminade_CS = lm(temp_cs$Cheminade ~  temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` +temp_cs$distance, data=temp_cs)
-Cheminade_CStout = lm(temp_cs$Cheminade ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+Cheminade_CS = lm(temp_cs$Cheminade ~  temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS4 + temp_cs$CS5 + temp_cs$CS7 + temp_cs$CS8 +temp_cs$distance, data=temp_cs)
 summary(Cheminade_CS) # show results
-summary(Cheminade_CStout)
-
+tidyCheminade = tidy (summary(Cheminade_CS))
+write.csv(tidyCheminade, "Cheminade.csv")
 # Dupont-Aignan
-Dupont_Aignan_CS = lm(temp_cs$Dupont_Aignan ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$distance, data=temp_cs)
-Dupont_Aignan_CStout = lm(temp_cs$Dupont_Aignan ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+Dupont_Aignan_CS = lm(temp_cs$Dupont_Aignan ~ temp_cs$CS2 + temp_cs$CS4 +temp_cs$CS6 + temp_cs$CS7  + temp_cs$distance, data=temp_cs)
 summary(Dupont_Aignan_CS)
-summary(Dupont_Aignan_CStout)
-
+tidyDupont = tidy (summary(Dupont_Aignan_CS))
+write.csv(tidyDupont, "Dupont.csv")
 # Fillon
-Fillon_CS = lm(temp_cs$Fillon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` +temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$distance, data=temp_cs)
-Fillon_CStout = lm(temp_cs$Fillon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+Fillon_CS = lm(temp_cs$Fillon ~ temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4  + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data=temp_cs)
 summary(Fillon_CS)
-summary(Fillon_CStout)
-
+tidyFillon = tidy (summary(Fillon_CS))
+write.csv(tidyFillon, "Fillon.csv")
+temp_cs$residusFI = resid(Fillon_CS)
 # Hamon
-Hamon_CS = lm(temp_cs$Hamon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$distance, data=temp_cs)
-Hamon_CStout = lm(temp_cs$Hamon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+Hamon_CS = lm(temp_cs$Hamon ~  temp_cs$CS2 + temp_cs$CS4 + temp_cs$CS6 + temp_cs$CS7 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$distance, data=temp_cs)
 summary(Hamon_CS)
-summary(Hamon_CStout)
-
+ tidyHamon = tidy (summary(Hamon_CS))
+write.csv(tidyHamon, "Hamon.csv")
+temp_cs$residusHA = resid(Hamon_CS)
 # Lassalle
-Lassalle_CS = lm(temp_cs$Lassalle ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`40-54 ans` + temp_cs$distance, data=temp_cs)
-Lassalle_CStout = lm(temp_cs$Lassalle ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+Lassalle_CS = lm(temp_cs$Lassalle ~  temp_cs$CS1 + temp_cs$CS4 + temp_cs$CS5 + temp_cs$CS7 + temp_cs$distance, data=temp_cs)
 summary(Lassalle_CS)
-summary(Lassalle_CStout)
-
+tidyLassalle = tidy (summary(Lassalle_CS))
+write.csv(tidyLassalle, "Lassalle.csv")
 # Lepen
-Lepen_CS = lm(temp_cs$Lepen ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` +  temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$distance, data=temp_cs)
-Lepen_CStout = lm(temp_cs$Lepen ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+Lepen_CS = lm(temp_cs$Lepen ~  temp_cs$CS2 + temp_cs$CS4 + temp_cs$CS6 + temp_cs$CS7 + temp_cs$`40-54 ans` +temp_cs$`55-64 ans` + temp_cs$distance, data=temp_cs)
 summary(Lepen_CS)
-summary(Lepen_CStout)
-
+tidyLepen = tidy (summary(Lepen_CS))
+write.csv(tidyLepen, "Lepen.csv")
+temp_cs$residusLE = resid(Lepen_CS)
 # Macron
-Macron_CS = lm(temp_cs$Macron ~  temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$distance, data=temp_cs)
-Macron_CStout = lm(temp_cs$Macron ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+Macron_CS = lm(temp_cs$Macron ~ temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$distance, data=temp_cs)
 summary(Macron_CS)
-summary(Macron_CStout)
-
+tidyMacron = tidy (summary(Macron_CS))
+write.csv(tidyMacron, "Macron.csv")
+temp_cs$residusMA = resid(Macron_CS)
 # Melenchon
-Melenchon_CS = lm(temp_cs$Melenchon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` +temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$distance, data=temp_cs)
-Melenchon_CStout = lm(temp_cs$Melenchon ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+Melenchon_CS = lm(temp_cs$Melenchon ~ temp_cs$CS2 + temp_cs$CS4  +temp_cs$CS5 + temp_cs$CS7 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` +temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$distance, data=temp_cs)
 summary(Melenchon_CS)
-summary(Melenchon_CStout)
-
+tidyMelenchon = tidy (summary(Melenchon_CS))
+write.csv(tidyMelenchon, "Melenchon.csv")
+temp_cs$residusME = resid(Melenchon_CS)
 # Poutou
-Poutou_CS = lm(temp_cs$Poutou ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` +  temp_cs$distance, data=temp_cs)
-Poutou_CStout = lm(temp_cs$Poutou ~ temp_cs$CS1 + temp_cs$CS2 + temp_cs$CS3 + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7 + temp_cs$CS8 + temp_cs$`18-24 ans` + temp_cs$`25-39 ans` + temp_cs$`40-54 ans` + temp_cs$`55-64 ans` + temp_cs$`65-79 ans` + temp_cs$`80 ans` + temp_cs$distance, data = temp_cs)
+Poutou_CS = lm(temp_cs$Poutou ~ temp_cs$CS1 + temp_cs$CS2  + temp_cs$CS4 + temp_cs$CS5 +temp_cs$CS6 + temp_cs$CS7  +  temp_cs$distance, data=temp_cs)
 summary(Poutou_CS)
-summary(Poutou_CStout)
+tidypoutou = tidy (summary(Poutou_CS))
+write.csv(tidypoutou, "Poutou.csv")
+# Petits candidats 
+
+temp_cs$petits = (temp_cs$Poutou + temp_cs$Lassalle + temp_cs$Cheminade + temp_cs$Asselineau + temp_cs$Arthaud)
+Petits = lm(temp_cs$petits ~ temp_cs$CS2+ temp_cs$CS4 +temp_cs$CS5 + temp_cs$CS7 + temp_cs$`18-24 ans` +  temp_cs$distance, data=temp_cs)
+summary(Petits)
+
+tidyPetits = tidy (summary(Petits))
+write.csv(tidyPetits, "Petits_reg.csv")
+temp_cs$residus = resid(Petits)
+
+# Second tour
+CS_age_resultats_2017_tour2_centralite <- read_csv("~/Documents/MA2/Mémoire/all_regressions/data_raw/CS_age_resultats_2017_tour2_centralite.csv", 
+                                                        col_types = cols(X1 = col_skip()))
+tour2 = CS_age_resultats_2017_tour2_centralite
+tour2 = tour2 %>%
+  rename( CS1 = C11_POP15P_CS1,
+          CS2 = C11_POP15P_CS2,
+          CS3 = C11_POP15P_CS3,
+          CS4 = C11_POP15P_CS4,
+          CS5 = C11_POP15P_CS5,
+          CS6 = C11_POP15P_CS6,
+          CS7 = C11_POP15P_CS7,
+          CS8 = C11_POP15P_CS8,
+          "18-24 ans" = POP1824,
+          "25-39 ans" = POP2539,
+          "40-54 ans" = POP4054,
+          "55-64 ans" = POP5564,
+          "65-79 ans" = POP6579,
+          "80 ans" = POP80P,
+          Lepen = PLEPEN ,
+          Macron = PMACRON
+  )
+# second tour
+# Lepen
+tour2_temp = lm(tour2$Lepen ~  tour2$CS2 + tour2$CS5 + tour2$CS7 + tour2$CS8  + tour2$distance, data=tour2)
+summary(tour2_temp)
+tidyLepen = tidy(summary(tour2_temp))
+round(tidyLepen,2)
+write.csv(tidyLepen,"reg_2_lepen.csv")
+temp_cs$residusLE2 = resid(tour2_temp)
+# Macron
+tour2_mac = lm(tour2$Macron ~ tour2$CS2 + tour2$CS3 + tour2$CS4 + tour2$CS7 +  tour2$distance, data=tour2)
+summary(tour2_mac)
+tidyMacron = tidy(summary(tour2_mac))
+write.csv(tidyMacron, "reg_2_macron.csv")
+tour2_mac$residusMA2 = resid(tour2_mac)
+
+write.csv(temp_cs,"allresidus.csv")
 ```
 
 ### script ACP et carte des scores :
