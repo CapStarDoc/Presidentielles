@@ -10,8 +10,11 @@
 Les données sont disponibles dans la section **Raw_data** de ce repositorie tandis que les cartes produites sont dans **Maps**.
 
 ## Obtention des données
+
 ##### Données électorales
-Les données brutes que j'ai utilisées proviennent [d'OpenData](https://public.opendatasoft.com/explore/dataset/election-presidentielle-2017-resultats-par-bureaux-de-vote-tour-1/table/?disjunctive.libelle_de_la_commune), mais ont été retravaillées par [@Aktiur](https://github.com/aktiur/resultats-electoraux). Les données exploitées sont les données en Large.
+
+Les données brutes que j'ai utilisées proviennent d'[OpenData](https://public.opendatasoft.com/explore/dataset/election-presidentielle-2017-resultats-par-bureaux-de-vote-tour-1/table/?disjunctive.libelle_de_la_commune), mais ont été retravaillées par [@Aktiur](https://github.com/aktiur/resultats-electoraux). Les données exploitées sont les données en Large.
+
 ##### Données sociologiques
 Celles-ci proviennent du site de l'[INSEE](https://www.insee.fr/fr/statistiques/2028584), 
 
@@ -20,29 +23,20 @@ Celles-ci proviennent du site de l'[INSEE](https://www.insee.fr/fr/statistiques/
 
 L'ensemble des traitements statistiques est réalisé grâce à [RStudio](https://www.rstudio.com).
 
-
-Réalisation d'une carte intéractive pour avoir les deux geoJson des bureaux 2012 et 2017 superposés. J'ai ainsi pu rajouter manuellement l'identifiant de chaque bureau de 2012 dans 2017. Lors de cette étape j'ai du faire certains choix qui ont présenté le principal biais pour la suite du travail, à savoir que certains bureaux ne se superposaient pas complètement, ou plusieurs bureaux de 2017 étaient repris dans un seul bureau de 2012.
+Réalisation d'une carte intéractive pour avoir les deux geoJson des bureaux 2012 et 2017 superposés. J'ai ainsi pu rajouter manuellement l'identifiant de chaque bureau de 2012 dans 2017. Lors de cette étape j'ai du faire certains choix qui ont présenté le principal biais pour la suite du travail, à savoir que certains bureaux ne se superposaient pas complètement, ou plusieurs bureaux de 2017 étaient repris dans un seul bureau de 2012. (860 bureaux sur 890 contiennent de l'information sociologiques, il n'y a pas de problème pour les données électorales)
 
 ### Production de cartes thématiques gréduées par candidats
 
-
-J'ai trouvé le type de données qu'il me faut avoir dans R pour que cela fonctionne dans QGIS après la jointure. Il faut que j'ai du ```character```, pour cela je vais utiliser la fonction ```R as.character(as.factor(data))``` qui est une imbrication de [as.factor](https://www.rdocumentation.org/packages/h2o/versions/3.22.1.1/topics/as.factor) et [as.character](https://www.rdocumentation.org/packages/fingerprint/versions/3.5.7/topics/as.character). 
-
-J'ai trouvé plus simple, je l'ai simplement réouverte dans Rstudio avec l'outil ```import dataset``` et en définissant chaque colonne comme character (j'ai également skip celles que je ne souhaitais plus, enfin je l'ai à nouveau extraite en ```R_P_L_2```.
+Pour la production de cartes électorales, j'ai utilisé le fichier```R_P_L_2``` qui a été construit comme suit:
 
 ```R
-# Data : X2017_presidentielle_1_par_bureau_large
-# Je ne conserve que les lignes dont la colonne département équivaut à 75 (PARIS) et je mets le résultat dans "R_P_L_1"
 
-R_P_L_1 = X2017_presidentielle_1_par_bureau_large [ which (X2017_presidentielle_1_par_bureau_large$departement == '75'), ]
-
-# J'extrais de R dans un fichier csv
-
-write.csv(R_P_L_1, "R_P_L_1.csv")
+R_P_L_1 = X2017_presidentielle_1_par_bureau_large [ which (X2017_presidentielle_1_par_bureau_large$departement == '75'), ] # Keep only departement 75 (Paris)
+write.csv(R_P_L_1, "R_P_L_1.csv") # Extract as csv
 
 # le code que me donne l'outil import dataset et la modiciation de chaque colonne en character ainsi que la suprresion des superflues
 
- R_P_L_1 <- read_csv("~/Desktop/données/R_P_L_1.csv", 
+ R_P_L_1 <- read_csv("~/Desktop/données/R_P_L_1.csv", # Import RPL1 as charachter and delete unused column
 +     col_types = cols(ARTHAUD = col_character(), 
 +         ASSELINEAU = col_character(), CHEMINADE = col_character(), 
 +         `DUPONT-AIGNAN` = col_character(), 
@@ -55,8 +49,7 @@ write.csv(R_P_L_1, "R_P_L_1.csv")
 +         departement = col_skip(), exprimes = col_character(), 
 +         inscrits = col_character(), votants = col_character()))
 
-# je l'extrais avec un nouveau nom
-write.csv(R_P_L_1, "R_P_L_2.csv")
+write.csv(R_P_L_1, "R_P_L_2.csv") # Extract as csv
 ```
 
 Voici donc le tableau final utilisé :
@@ -68,22 +61,16 @@ Voici donc le tableau final utilisé :
 | 3 | 0103   | 1155     | 957     | 9      | 947      | 0       | 13         | 0         | 17            | 210    | 77    | 12       | 56     | 409    |
 | 4 | 0104   | 1300     | 1069    | 14     | 1052     | 0       | 10         | 2         | 19            | 226    | 102   | 9        | 57     | 381    |
 
-Bien entendu je ne mets que des extraits de mes tables.
-
-Tout ce que j'ai réalisé avant fonctionne ! Pour cela j'ai dû modifier les fichiers csvt que j'avais crée, puisqu'ils étaient en ```"Integer"``` or, comme j'ai créé des pourcentages j'ai besoin des décimales (principalement pour les plus petits candidats), j'ai donc passé ceux-ci en ```Real```.
+Bien entendu ce n'est qu'un extrait (voir raw_data du repo)
 
 J'utilise donc ```bureaux_clean_shp_ID```avec un de mes trois fichier crées au dessus (```R_P_L_2_PI```, ```R_P_L_2_PE```, ```R_P_L_2_PV```). Il me reste donc à choisir quel fichier de résulats je vais exploiter et quels discrétisation je souhaite utiliser.
 
-#### Pourcentage sur base des inscrits aux bureaux de vote 
+Les résultats ne sont pas encore en pourcent:
+
 
 ```R
-# work on a new dataset
-
-Poucentages_inscrits = R_P_L_2
-
-# rename data with false name
-
-colnames(Poucentages_inscrits)
+Poucentages_inscrits = R_P_L_2 # work on a new dataset
+colnames(Poucentages_inscrits) # rename data with false name
 
 # [1] "bureau"        "inscrits"      "votants"       "blancs"        "exprimes"      "ARTHAUD"       "ASSELINEAU"    "CHEMINADE"     "DUPONT-AIGNAN"
 # [10] "FILLON"        "HAMON"         "LASSALLE"      "LE PEN"        "MACRON"        "MÉLENCHON"     "POUTOU"   
@@ -105,30 +92,12 @@ Poucentages_inscrits$PMACRON = ((Poucentages_inscrits$MACRON/Poucentages_inscrit
 Poucentages_inscrits$PMELENCHON = ((Poucentages_inscrits$MELENCHON/Poucentages_inscrits$inscrits)*100)
 Poucentages_inscrits$PPOUTOU = ((Poucentages_inscrits$POUTOU/Poucentages_inscrits$inscrits)*100)
 
-# remove old column
-
-Poucentages_inscrits[2:16] <- list(NULL)
-
-# extract in csv
-write.csv(Poucentages_inscrits, "R_P_L_2_PI.csv")
+Poucentages_inscrits[2:16] <- list(NULL) # remove old column
+write.csv(Poucentages_inscrits, "R_P_L_2_PI.csv") # extract in csv
 ```
+Pour les cartes graduées j'utilise donc ```bureaux_clean_shp_ID``` en jointure avec ```R_P_L_2_PI``` qui sont les résultats en pourcentage des inscrits pour rendre compte de l'abstention.
 
-Comme expliqué auparavant, je me concentre maintenant sur la production de cartes thématiques sur un parti. J'ai rencontré un sérieux problème de jointure. En effet, j'ai mes bureaux de votes en shapefile sauf que je n'avais aucune colonne correspondante entre le shapefile et mes résultats électoraux.
-
-Dans un premier temps j'ai traité mes données présidentielles pour ne conserver que les données de Paris via un petit script simpliste :
-
-```R
-# Data : X2017_presidentielle_1_par_bureau_large
-# Je ne conserve que les lignes dont la colonne département équivaut à 75 (PARIS) et je mets le résultat dans "R_P_L_1"
-
-R_P_L_1 = X2017_presidentielle_1_par_bureau_large [ which (X2017_presidentielle_1_par_bureau_large$departement == '75'), ]
-
-# J'extrais de R dans un fichier csv
-
-write.csv(R_P_L_1, "R_P_L_1.csv")
-```
-
-Après cette étape, j'ajoute mes données dans QGIS. Comme je disais, il y a un problème de correspondance pour faire une jointure dans QGIS. Après quelque temps de blocage, je me suis concentré sur la colonne ```id_bv``` de mon shapefile des bureaux de vote qui étaient de type xx-xx (voir première table) , alors que mes ID ```bureau``` de R_P_L_1 sont de type xxxx (voir seconde table).
+Un problème de correspondance survient lors de la jointure. Après quelque temps de blocage, je me suis concentré sur la colonne ```id_bv``` de mon shapefile des bureaux de vote qui étaient de type xx-xx (voir première table), alors que mes ID ```bureau``` de R_P_L_1 sont de type xxxx (voir seconde table).
 
 
 | OBJECTID | Nombre d’électeurs Français à cette adresse | Nombre d’électeurs européens pour les élections Municipales | Nombre d’électeurs européens pour les élections Européennes | Nombre d’électeurs à l’étranger | Validité | N° arrondissement | N° Bureau de vote | Identifiant du bureau de vote |
@@ -153,25 +122,16 @@ Via la [calculatrice de champs de QGIS](https://gis.stackexchange.com/questions/
 
 ![](/Images/calculatrice_de_champs.png)
 
-(Pour faire la même étape avec [R](https://stackoverflow.com/questions/46138530/removing-underscore-and-front-slash-from-columns-in-r))
-
 Ensuite j'ai dû réaliser à la main, la modification de chaque ID pour le faire correspondre. les 1-1 étant devenus 11 devaient être modifiés en 0101 par exemple. J'ai procédé petit à petit en vérifiant en parallèle que ma jointure concordait. La table que j'en ai tiré, je l'extrais en un nouveau shapefile ```bureaux_clean_shp.shp```. (D'ailleurs, il est assez perturbant de ne plus trouver dans QGIS3 la fonction save as comme sur les versions précédentes, j'ai eu réponse à ma question [ici](https://gis.stackexchange.com/questions/293781/no-save-as-in-qgis-3-2))
 
 Ce shapefile est simplement l'ensemble des contours de Paris (voir ci-dessous), sauf qu'à présent j'ai de quoi le lier à mes résultats des élections.
-
-Un nouveau problème est rencontré : la jointure a bien lieu dans QGIS, les deux tables sont liées et l'ensemble de tableau correspond, seulement lorsque je veux utilisé les données d'une des couches de la table ```R_P_L_1```, comme par exemple les résultats de Marine Lepen. Lorsque je suis dans les propriétés de la couche shapefile avec la jointure, QGIS me propose seulement les colonnes de la première table ```bureaux_clean_shp```, il s'agit d'un problème de type de données de ma table jointe. Toute mes données ```R_P_L1```sont passées en string, soit lors de l'import dans R, soit lors de l'extraction.
-
-
-Ce matin je transforme mes nombres de votes en pourcentage grâce à R. J'ai réalisé un petit script pour transformer chaque colonne de vote en pourcentage. Pour plus de faciliter j'ai renommer deux colonnes : "LE PEN" en "LEPEN", "DUPONT-AIGNAN" en "DUPONTAIGNAN" et enfin "MéLENCHON" en "MELENCHON". Pour cela j'ai utilisé la fonction ```names```. (Je pense que ```dplyr```aurait pu aller plus vite mais je n'ai pas exploiter, [ici](https://www.datanovia.com/en/lessons/rename-data-frame-columns-in-r/))
-
-Je me suis basé sur [ça](https://stackoverflow.com/questions/6286313/remove-an-entire-column-from-a-data-frame-in-r) pour enlever les colonnes.
 
 ### Carte des résultats du second tour :
 
 J'ai dû à nouveau traiter les données pour obtenir des données exploitables dans QGIS, j'ai modifié mon script R :
 
 ```R
-R_P_L_T2_1 = X2017_presidentielle_2_par_bureau_large [which(X2017_presidentielle_2_par_bureau_large$departement== '75'), ] # keep only department 75 alias Paris
+R_P_L_T2_1 = X2017_presidentielle_2_par_bureau_large [which(X2017_presidentielle_2_par_bureau_large$departement== '75'), ] # keep only department 75 (Paris)
 Poucentages_inscrits = R_P_L_T2_1 # work on a new dataset
 colnames(Poucentages_inscrits) # rename data with false name
 #[1] "departement"     "commune"         "bureau"          "circonscription" "commune_libelle"
@@ -185,12 +145,9 @@ Poucentages_inscrits$PLEPEN = ((Poucentages_inscrits$LEPEN/Poucentages_inscrits$
 Poucentages_inscrits$PMACRON = ((Poucentages_inscrits$MACRON/Poucentages_inscrits$inscrits)*100)
 Poucentages_inscrits[6:7] = list(NULL) # remove old column
 
-# extract in csv
-write.csv(Poucentages_inscrits, "R_P_L_T2_2.csv")
+write.csv(Poucentages_inscrits, "R_P_L_T2_2.csv") # extract in csv
 ```
-
 Ensuite j'ai effectué la jointure déjà expliquée précédemment pour obtenir des cartes avec rupture de Jenks à 6 classes pour 
-
 
 ### Discrétisation 
 
@@ -237,13 +194,14 @@ Se rapproche des intervalles égaux, avec classes adaptées aux extrémités de 
 
 Un petit récapitulatif : Mode [Cheatsheet](https://mesange.educagri.fr/htdocs/sigea/supports/QGIS/distance/perfectionnement/M03_AnalyseThematique_gen_web/res/d_25_20_discretisation.pdf).
 
-
 ### Ventilation
 
-Pour pouvoir mettre en commun mes données sociologiques et électorales je devais obtenir un ID correspondant entre les résultats par bureaux de 2012 et ceux de 2017. En effet les premiers contiennent l'identifiant IRIS qui permet de les lier aux données sociologiques pour la ventilation.
+Afin de mettre en commun mes données sociologiques et électorales je devais obtenir un ID correspondant entre les résultats par bureaux de 2012 et ceux de 2017. En effet les premiers contiennent l'identifiant IRIS qui permet de les lier aux données sociologiques pour la ventilation.
 
 Pour cela j'ai réalisé une carte intéractive qui me permet de visualiser les deux GeoJson de manière simultanée, et en parallèle j'utilisais la table de mes bureaux de 2017 dans QGIS. Cela m'a permis d'ajouter manuellement un ID de 2012 pour chaque bureau de 2017. Cette étape s'est avérée très longue et aurait pu être automatisée, seulement le niveau demandé pour cette étape était plus élevé que mes compétences.
 
+
+Script pour la carte interactive:
 ```R
 # required Packages
 library(rgdal)
@@ -294,9 +252,8 @@ mapview(
   )
 ```
 
-Après avoir ajouter ce nouvel ID dans mes bureaux de 2017 je suis à même de les joindre avec les bureaux de 2012. Ce nouveau fichier s'appelle ```bureaux_avec_ID_PS_2012.geojson```. Grâce à celui j'ai donc la possibilité de joindre mes résultats électoraux de 2017 aux bureaux de 2012 et donc aux données sociologiques. En effet grâce au package [SpReapportion](https://github.com/joelgombin/spReapportion/tree/master/R) de @joelgombin, j'ai la possibilité de ventiler les données sociologiques, qui sont à l'échelle [IRIS](https://fr.wikipedia.org/wiki/Îlots_regroupés_pour_l%27information_statistique) à l'intérieur des bureaux électoraux de 2012.  
-
-J'ai ensuite lancé la ventilation via :
+Après avoir ajouté ce nouvel ID dans mes bureaux de 2017 je suis à même de les joindre avec les bureaux de 2012. Ce nouveau fichier s'appelle ```bureaux_avec_ID_PS_2012.geojson```. Grâce à celui j'ai donc la possibilité de joindre mes résultats électoraux de 2017 aux bureaux de 2012 et donc aux données sociologiques. En effet grâce au package [SpReapportion](https://github.com/joelgombin/spReapportion/tree/master/R) de @joelgombin, j'ai la possibilité de ventiler les données sociologiques, qui sont à l'échelle [IRIS](https://fr.wikipedia.org/wiki/Îlots_regroupés_pour_l%27information_statistique) à l'intérieur des bureaux électoraux de 2012.  Autrement dit, les données reprises dans une entité à l'échelle IRIS sont considérées comme uniforme sur cette entité et sont ensuite transférées au sein d'une entité à l'échelle des bureaux de 2012.
+Ensuite, j'ai effectué la jointure des bureaux de 2017 sur le résultat de la ventilation, puis j'ai joint les résultats électoraux ce qui me donne comme fichier final ```CS_ag_resultats2017.csv```. Le script de cette étape:
 ```R
 
 ##### required packages #####
@@ -316,7 +273,7 @@ library(rgdal)
 library(spReapportion)
 library(dplyr)
 
-##### Open the datas #####
+##### Open the data #####
 load("~/Documents/MA2/Mémoire/jointure/data_raw/ParisIris.rda")
 load("~/Documents/MA2/Mémoire/jointure/data_raw/ParisPollingStations2012.rda")
 load("~/Documents/MA2/Mémoire/jointure/data_raw/RP_2011_CS8_Paris.rda")
@@ -366,7 +323,10 @@ write.csv(CS_age_resultats2017, "CS_age_resultats_2017")
 
 ### Script pour toutes les régressions linéaires multiples:
 
+Pour vérifier la véracité des cartes j'ai réalisé une série de régressions linéaires mutliples (les données indépendantes ont été sélectionnées sur base de la méthode de stepwise regression):
+
 ```R
+##### required packages #####
 
 library(broom)
 library(car)
@@ -476,14 +436,11 @@ summary(Poutou_CS)
 tidypoutou = tidy (summary(Poutou_CS))
 write.csv(tidypoutou, "Poutou.csv")
 # Petits candidats 
-
 temp_cs$petits = (temp_cs$Poutou + temp_cs$Lassalle + temp_cs$Cheminade + temp_cs$Asselineau + temp_cs$Arthaud)
 Petits = lm(temp_cs$petits ~ temp_cs$CS2+ temp_cs$CS4 +temp_cs$CS5 + temp_cs$CS7 + temp_cs$`18-24 ans` +  temp_cs$distance, data=temp_cs)
 summary(Petits)
-
 tidyPetits = tidy (summary(Petits))
 write.csv(tidyPetits, "Petits_reg.csv")
-temp_cs$residus = resid(Petits)
 
 # Second tour
 CS_age_resultats_2017_tour2_centralite <- read_csv("~/Documents/MA2/Mémoire/all_regressions/data_raw/CS_age_resultats_2017_tour2_centralite.csv", 
@@ -507,22 +464,21 @@ tour2 = tour2 %>%
           Lepen = PLEPEN ,
           Macron = PMACRON
   )
-# second tour
+### second tour ###
 # Lepen
 tour2_temp = lm(tour2$Lepen ~  tour2$CS2 + tour2$CS5 + tour2$CS7 + tour2$CS8  + tour2$distance, data=tour2)
 summary(tour2_temp)
 tidyLepen = tidy(summary(tour2_temp))
 round(tidyLepen,2)
 write.csv(tidyLepen,"reg_2_lepen.csv")
-temp_cs$residusLE2 = resid(tour2_temp)
+
 # Macron
 tour2_mac = lm(tour2$Macron ~ tour2$CS2 + tour2$CS3 + tour2$CS4 + tour2$CS7 +  tour2$distance, data=tour2)
 summary(tour2_mac)
 tidyMacron = tidy(summary(tour2_mac))
 write.csv(tidyMacron, "reg_2_macron.csv")
-tour2_mac$residusMA2 = resid(tour2_mac)
 
-write.csv(temp_cs,"allresidus.csv")
+
 ```
 
 ### script ACP et carte des scores :
@@ -540,7 +496,7 @@ library(readr)
 library(rgdal)
 library(tidyverse)
 
-# Inspire from here : http://www.sthda.com/french/articles/38-methodes-des-composantes-principales-dans-r-guide-pratique/79-acp-dans-r-prcomp-vs-princomp/#variables-supplementaires
+# Inspired from here : http://www.sthda.com/french/articles/38-methodes-des-composantes-principales-dans-r-guide-pratique/79-acp-dans-r-prcomp-vs-princomp/#variables-supplementaires
 
 CS_age_resultats_2017 <- read_csv("~/Documents/MA2/Mémoire/ACP/data_raw/CS_age_resultats_2017.csv", 
                                          col_types = cols(X1 = col_skip()))
@@ -579,8 +535,8 @@ temp_res = temp_cs
 ############################# PCA on results ##############################
 
 temp_res.pca = prcomp(temp_res[,c(22:32)], center = TRUE,scale. = TRUE)
-summary(temp_res.pca) # PC1 explains 40% of the total variance and PC2 13,5 %, with these two we have half of the variance
-str(temp_res.pca) # Have a look at the PCA object, $center: center point / $scale: scaling / sdev : standard deviation of each PC, $rotation : the ralationship (correlation and anticorrelatio etc) between the initial variables and the PC, $x : the values of each sample in terms of the principal components.
+summary(temp_res.pca)
+str(temp_res.pca)
 
 ##### Get Eigen values and other #####
 eig.val_res = get_eigenvalue(temp_res.pca)
@@ -613,16 +569,18 @@ scoresACP_res_carto = mergedata %>% # choose only bureau and PC
   select (2,35:45)
 write.csv(scoresACP_res_carto, "scoresACP_res_carto.csv") # extract to csv and map them in Qgis
 
+
+## Visualization
 arrondissements <- readOGR(dsn = "./data_raw/arrondissements_retouches.shp", layer = "arrondissements_retouches")
 arrondissements = sf::st_as_sf(arrondissements)
 
 
-meuse = scores_carto_bureau
-mapview(meuse,map.types = "CartoDB", zcol = "scoresACP_res_carto_PC1", col.regions = c("red", "grey", "snow"),
+visuCP = scores_carto_bureau
+mapview(visuACP,map.types = "CartoDB", zcol = "scoresACP_res_carto_PC1", col.regions = c("red", "grey", "snow"),
         layer.name = c("PC1")) +
-  mapview(meuse,map.types = "CartoDB", zcol = "scoresACP_res_carto_PC2", col.regions = c("green", "grey", "snow"),
+  mapview(visuACP,map.types = "CartoDB", zcol = "scoresACP_res_carto_PC2", col.regions = c("green", "grey", "snow"),
           layer.name = "PC2") +
-  mapview(meuse,map.types = "CartoDB", zcol = c( "scoresACP_res_carto_PC3"), col.regions = c("blue", "grey", "snow"),
+  mapview(visuACP,map.types = "CartoDB", zcol = c( "scoresACP_res_carto_PC3"), col.regions = c("blue", "grey", "snow"),
           layer.name = "PC3") +
   mapview(
     arrondissements,
